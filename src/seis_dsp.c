@@ -6,6 +6,54 @@
 #include "sacio.h"
 
 #define SIZE 512
+#define EPS 1.0e-6
+
+/* -------------------------- Get nfft for FFT ------------------------- */
+int pow_next2(int n){
+    int f, nf;
+    f = (int)(log(n)/log(2.));
+    if(abs(pow(2, f)-n) >= EPS )
+        f += 1;
+    nf = (int) (pow(2, f));
+    return nf;
+}
+
+
+/* ----------------------- Filtering on Digital Signal ----------------- */
+/* ------------------------ low-pass filter ---------------------------- */
+void lp(float *x, int n, float *y, float fs, float fc, int order){
+    int i, nfft;
+    fftw_complex *in, *out;
+    fftw_plan p;
+    float tmp, f, H;
+    nfft = pow_next2(n);
+    in = (fftw_complex *) fftw_malloc(sizeof(fftw_complex) * nfft);
+    out = (fftw_complex *) fftw_malloc(sizeof(fftw_complex) * nfft);
+    for(i = 0; i < nfft; i ++){
+        if(i < n)
+            in[i][0] = *(x+i);
+        else
+            in[i][0] = 0.;
+        in[i][1] = 0.;
+    }
+    p = fftw_plan_dft_1d(nfft, in, out, FFTW_FORWARD, FFTW_ESTIMATE);
+    fftw_execute(p);
+    for(i = 0; i < (nfft/2); i ++){
+        f = i*fs / nfft;
+        tmp = -pow(f/fc, order);
+        H = 2.*exp(tmp) / (1.+exp(tmp));
+        out[i][0] *= H;
+        out[i][1] *= H;
+        out[nfft-1-i][0] = out[i][0];
+        out[nfft-1-i][1] = out[i][1];
+    }
+    p = fftw_plan_dft_1d(nfft, out, in, FFTW_BACKWARD, FFTW_ESTIMATE);
+    fftw_execute(p);
+    for(i = 0; i < n; i ++)
+        *(y+i) = in[i][0]/nfft*2.;
+    fftw_destroy_plan(p);
+    fftw_free(in); fftw_free(out);
+}
 
 /* --------------------------------------------------------------------- */
 /* --------------------- Discrete Hilbert Tansform --------------------- */
@@ -16,10 +64,7 @@ void hil_trans(float *d, int n, float *s){
     float f;
     
     // Get integer power of 2.
-    f = log((float)n) / log(2.);
-    if( fabs(f-(int)f) > 0.)
-        f += 1.;
-    nf = (int)pow(2, (int)f);
+    nf = pow_next2(n);
     
     s_in = (fftw_complex *) fftw_malloc(sizeof(fftw_complex) * nf);
     s_out = (fftw_complex *) fftw_malloc(sizeof(fftw_complex) * nf);
@@ -160,3 +205,4 @@ void ts_pws(char *fname, char *out_name, int v){
         free(s); free(data);
         fftw_free(c);
 }
+

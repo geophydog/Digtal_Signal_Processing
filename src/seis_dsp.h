@@ -1,6 +1,12 @@
 #ifndef _SEIS_DSP_H
 #define _SEIS_DSP_H
 
+/* ---------------------- Get nfft for FFT ---------------------- */
+int pow_next2(int n);
+
+/* -------------------- Low-pass filter ------------------------  */
+void lp(float *x, int n, float *y, float fs, float fc, int order);
+
 /* ------------------ Discrete Hilbert Transform ---------------- */
 void hil_trans(float *d, int n, float *s);
 

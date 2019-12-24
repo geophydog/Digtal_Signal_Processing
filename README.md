@@ -4,4 +4,4 @@
 
 ## :two:  Evelope
 
-## :three:  Phasw-weighted stacking
+## :three:  Phase-weighted stacking

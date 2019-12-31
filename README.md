@@ -2,6 +2,6 @@
 
 ## :one:  Discrete Hilbert Transformation
 
-## :two:  Evelope
+## :two:  Envelope
 
 ## :three:  Phase-weighted stacking

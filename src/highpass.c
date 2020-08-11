@@ -5,7 +5,7 @@
 
 int main(int argc, char *argv[]){
     if(argc != 5){
-        fprintf(stderr, "Usage: lowpass sacin sacout fc order\n");
+        fprintf(stderr, "Usage: highpass sacin sacout fc order\n");
         exit(1);
     }
     float *x, *y, fc, fs;
@@ -15,7 +15,7 @@ int main(int argc, char *argv[]){
     x = read_sac(argv[1], &hd);
     y = (float *) malloc(sizeof(float) * hd.npts);
     fs = 1. / hd.delta;
-    lowpass_butter(x, hd.npts, y, fs, fc, order);
+    highpass_butter(x, hd.npts, y, fs, fc, order);
     write_sac(argv[2], hd, y);
     free(x); free(y);
     return 0;

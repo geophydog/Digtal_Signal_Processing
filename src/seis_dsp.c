@@ -7,6 +7,7 @@
 
 #define SIZE 512
 #define EPS 1.0e-6
+#define PI 3.1415926535
 
 /* -------------------------- Get nfft for FFT ------------------------- */
 int pow_next2(int n){
@@ -19,9 +20,41 @@ int pow_next2(int n){
 }
 
 
-/* ----------------------- Filtering on Digital Signal ----------------- */
+/* ----------------------- Filtering on Digital Signals ---------------- */
+/* ----------------------- Butterworth low-pass filter ----------------- */
+void lowpass_butter(float *x, int n, float *y, float fs, float fc, int order){
+    float wc, w, tmp;
+    int nfft;
+    nfft = pow_next2(n);
+    wc = 2 * PI * fc / fs;
+    fftw_complex *in, *out;
+    fftw_plan p;
+    in = (fftw_complex *) fftw_malloc(sizeof(fftw_complex) * nfft);
+    out = (fftw_complex *) fftw_malloc(sizeof(fftw_complex) * nfft);
+    for(int i = 0; i < nfft; i ++){
+        if(i < n)
+            in[i][0] = *(x+i);
+        else
+            in[i][0] = 0.;
+        in[i][1] = 0.;
+    }
+    p = fftw_plan_dft_1d(nfft, in, out, FFTW_FORWARD, FFTW_ESTIMATE);
+    fftw_execute(p);
+    for(int i=0; i < nfft; i ++){
+        w = 2 * PI * i / nfft;
+        tmp = 1. / (1.+pow(tan(w/2.)/tan(wc/2.), 2.*order));
+        out[i][0] *= tmp; out[i][1] *= tmp;
+    }
+    p = fftw_plan_dft_1d(nfft, out, in, FFTW_BACKWARD, FFTW_ESTIMATE);
+    fftw_execute(p);
+    for(int i=0; i < n; i ++)
+        *(y+i) = in[i][0] / nfft;
+    fftw_destroy_plan(p);
+    fftw_free(in); fftw_free(out);
+}
+
 /* ------------------------ low-pass filter ---------------------------- */
-void lp(float *x, int n, float *y, float fs, float fc, int order){
+void lowpass_exp(float *x, int n, float *y, float fs, float fc, int order){
     int i, nfft;
     fftw_complex *in, *out;
     fftw_plan p;
@@ -51,6 +84,74 @@ void lp(float *x, int n, float *y, float fs, float fc, int order){
     fftw_execute(p);
     for(i = 0; i < n; i ++)
         *(y+i) = in[i][0]/nfft*2.;
+    fftw_destroy_plan(p);
+    fftw_free(in); fftw_free(out);
+}
+
+/* -------------------- Butterworth high-pass filter ------------------- */
+void highpass_butter(float *x, int n, float *y, float fs, float fc, int order){
+    int nfft;
+    float w, tmp, wc;
+    nfft = pow_next2(n);
+    wc = 2 * PI * fc / fs;
+    fftw_complex *in, *out;
+    fftw_plan p;
+    in = (fftw_complex *) fftw_malloc(sizeof(fftw_complex) * nfft);
+    out = (fftw_complex *) fftw_malloc(sizeof(fftw_complex) * nfft);
+    for(int i = 0; i < nfft; i ++){
+        if(i < n)
+            in[i][0] = *(x+i);
+        else
+            in[i][0] = 0.;
+        in[i][1] = 0.;
+    }
+    p = fftw_plan_dft_1d(nfft, in, out, FFTW_FORWARD, FFTW_ESTIMATE);
+    fftw_execute(p);
+    for(int i=0; i < nfft; i ++){
+        w = 2 * PI * i / nfft;
+        tmp = 1. / (1.+pow(tan(wc/2.)/tan(w/2.), 2.*order));
+        out[i][0] *= tmp; out[i][1] *= tmp;
+    }
+    p = fftw_plan_dft_1d(nfft, out, in, FFTW_BACKWARD, FFTW_ESTIMATE);
+    fftw_execute(p);
+    for(int i=0; i < n; i ++)
+        *(y+i) = in[i][0] / nfft;
+    fftw_destroy_plan(p);
+    fftw_free(in); fftw_free(out);
+
+}
+
+/* ------------------- Butterworth band-pass filter -------------------- */
+void bandpass_butter(float *x, int n, float *y, float fs,\
+		     float f1, float f2, int order){
+    int nfft;
+    float w, w1, w2, tmp;
+    nfft = pow_next2(n);
+    w1 = 2. * PI * f1 / fs;
+    w2 = 2. * PI * f2 / fs;
+    fftw_complex *in, *out;
+    fftw_plan p;
+    in = (fftw_complex *) fftw_malloc(sizeof(fftw_complex) * nfft);
+    out = (fftw_complex *) fftw_malloc(sizeof(fftw_complex) * nfft);
+    for(int i = 0; i < nfft; i ++){
+        if(i < n)
+            in[i][0] = *(x+i);
+        else
+            in[i][0] = 0.;
+        in[i][1] = 0.;
+    }
+    p = fftw_plan_dft_1d(nfft, in, out, FFTW_FORWARD, FFTW_ESTIMATE);
+    fftw_execute(p);
+    for(int i=0; i < nfft; i ++){
+        w = 2 * PI * i / nfft;
+        tmp = 1. / (1.+pow(tan(w1/2.)/tan(w/2.), 2.*order)) /\
+                   (1.+pow(tan(w/2.)/tan(w2/2.), 4.*order));
+        out[i][0] *= tmp; out[i][1] *= tmp;
+    }
+    p = fftw_plan_dft_1d(nfft, out, in, FFTW_BACKWARD, FFTW_ESTIMATE);
+    fftw_execute(p);
+    for(int i=0; i < n; i ++)
+        *(y+i) = in[i][0] / nfft;
     fftw_destroy_plan(p);
     fftw_free(in); fftw_free(out);
 }

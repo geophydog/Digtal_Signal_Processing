@@ -7,6 +7,6 @@
 ## :three:  Phase-weighted stacking
 
 ## :four: Filter on data
-	[-] low-pass;
-	[-] high-pass;
-	[-] band-pass.
+	- low-pass;
+	- high-pass;
+	- band-pass.

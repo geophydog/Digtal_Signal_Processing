@@ -5,3 +5,8 @@
 ## :two:  Envelope
 
 ## :three:  Phase-weighted stacking
+
+## :four: Filter on data
+	[-] low-pass;
+	[-] high-pass;
+	[-] band-pass.

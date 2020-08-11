@@ -12,8 +12,10 @@ import matplotlib.pyplot as plt
 tr = read('BX.BROLN.BHZ.SAC')[0]
 dt = tr.stats.delta
 t = np.arange(len(tr.data)) * dt
-# Cut off frequency for low- and high-padd filters.
-fc = 0.3
+# Cut off frequency for high-padd filter.
+fcl = 0.1
+# Cut off frequency for low-padd filter.
+fch = 0.3
 # Low corner frequency for band-pass filter.
 f1 = 0.1
 # High corner frequency for band-pass filter.
@@ -22,11 +24,11 @@ f2 = 0.3
 N = 4
 # Low-pass filter of obspy.
 trl = tr.copy()
-trl.filter('lowpass', freq=fc, corners=N, zerophase=True)
+trl.filter('lowpass', freq=fcl, corners=N, zerophase=True)
 dl = trl.data
 # High-pass filter of obspy.
 trh = tr.copy()
-trh.filter('highpass', freq=fc, corners=N, zerophase=True)
+trh.filter('highpass', freq=fch, corners=N, zerophase=True)
 dh = trh.data
 # Band-pass filter of obspy.
 trb = tr.copy()
@@ -53,7 +55,7 @@ plt.ylabel('Amplitude', fontsize=14)
 plt.xticks(fontsize=12)
 plt.yticks(fontsize=12)
 plt.legend(fontsize=12)
-plt.title('low-pass filter', fontsize=14)
+plt.title('low-pass filter: <= 0.1 Hz', fontsize=14)
 
 plt.subplot(312)
 plt.plot(t, dh, 'r', lw=3, label='obspy')
@@ -64,7 +66,7 @@ plt.ylabel('Amplitude', fontsize=14)
 plt.xticks(fontsize=12)
 plt.yticks(fontsize=12)
 plt.legend(fontsize=12)
-plt.title('high-pass filter', fontsize=14)
+plt.title('high-pass filter: >= 0.3 Hz', fontsize=14)
 
 plt.subplot(313)
 plt.plot(t, db, 'r', lw=3, label='obspy')
@@ -75,6 +77,6 @@ plt.ylabel('Amplitude', fontsize=14)
 plt.xticks(fontsize=12)
 plt.yticks(fontsize=12)
 plt.legend(fontsize=12)
-plt.title('band-pass filter', fontsize=14)
+plt.title('band-pass filter: 0.1 - 0.3 Hz', fontsize=14)
 plt.savefig('benchmark.pdf')
 plt.show()
